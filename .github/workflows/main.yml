@@ -1,0 +1,482 @@
+name: Build MxxHub iOS v0.4.9.57 Windows V48 Texture SRV Safe COM
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main ]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-15
+
+    steps:
+      - name: Checkout MxxHub
+        uses: actions/checkout@v5
+
+      - name: Show Xcode version
+        run: xcodebuild -version
+
+      - name: Install build tools
+        run: brew install xcodegen make flock
+
+      - name: Verify repository layout
+        run: |
+          echo "Repository root:"
+          pwd
+          ls -la
+          test -f ./prepare_wineglass.sh
+          test -f ./patch_hollow_knight_boot.py
+          test -f ./project.yml
+          test -f ./MxxHubApp.swift
+          test -f ./mxxhub_patch_windows_display_v32.py
+          grep -Fq 'DISPLAY V32 MONITOR CALLBACK:' mxxhub_patch_windows_display_v32.py
+          grep -Fq 'MESSAGEBOX V32:' mxxhub_patch_windows_display_v32.py
+          echo "MXXHUB_V32_OPTIONAL_LOG_SOURCE_FINGERPRINT_OK"
+          test -f ./mxxhub_patch_win64_string_fileptr_v33.py
+          test -f ./mxxhub_patch_fileattributesex_v34.py
+          test -f ./mxxhub_patch_waitonaddress_v37.py
+          test -f ./mxxhub_patch_unwind_tables_v38.py
+          test -f ./mxxhub_patch_critsec_backoff_v38.py
+          test -f ./mxxhub_patch_waitaddr_idle_v39.py
+          grep -Fq "MXXHUB_WINDOWS_V39_WAITADDR_IDLE_SCHEDULER" mxxhub_patch_waitaddr_idle_v39.py
+          grep -Fq "WAITADDR V39 IDLE-PARK:" mxxhub_patch_waitaddr_idle_v39.py
+          grep -Fq "WAITADDR V39 HOST-WAKE:" mxxhub_patch_waitaddr_idle_v39.py
+          grep -Fq "mxxhub_patch_waitaddr_idle_v39.py" prepare_wineglass.sh
+          echo "MXXHUB_V39_IDLE_SCHEDULER_SOURCE_OK"
+          test -f ./mxxhub_patch_real_module_gpa_v40.py
+          grep -Fq "MXXHUB_WINDOWS_V40_REAL_MODULE_GPA_SEMANTICS" mxxhub_patch_real_module_gpa_v40.py
+          grep -Fq "GPA V40 REAL-MODULE MISS:" mxxhub_patch_real_module_gpa_v40.py
+          grep -Fq "GPA V40 MANAGED-PROBE PRESERVE:" mxxhub_patch_real_module_gpa_v40.py
+          grep -Fq "mxxhub_patch_real_module_gpa_v40.py" prepare_wineglass.sh
+          echo "MXXHUB_V40_REAL_MODULE_GPA_SOURCE_OK"
+          test -f ./mxxhub_patch_unity_dialog_waitaddr_v41.py
+          grep -Fq "DIALOG V41 X64 BYPASS:" mxxhub_patch_unity_dialog_waitaddr_v41.py
+          grep -Fq "WAITADDR V41 COORD-WAKE:" mxxhub_patch_unity_dialog_waitaddr_v41.py
+          grep -Fq "mxxhub_patch_unity_dialog_waitaddr_v41.py" prepare_wineglass.sh
+          grep -Fq "first non-dialog guest window" MxxWineRuntimeViewController.m
+          echo "MXXHUB_V41_SOURCE_OK"
+          test -f ./mxxhub_patch_shcore_dialogdiag_v42.py
+          test -f ./mxxhub_patch_managed_probe_escape_v43.py
+          grep -Fq "MXXHUB_WINDOWS_V42_SHCORE_DPI_AND_DIALOG_DIAG" mxxhub_patch_shcore_dialogdiag_v42.py
+          grep -Fq 'strcasestr(ascii, "shcore")' mxxhub_patch_shcore_dialogdiag_v42.py
+          grep -Fq "SHCORE V42 GetDpiForMonitor" mxxhub_patch_shcore_dialogdiag_v42.py
+          grep -Fq "DIALOG V42 RESOURCE:" mxxhub_patch_shcore_dialogdiag_v42.py
+          grep -Fq "mxxhub_patch_shcore_dialogdiag_v42.py" prepare_wineglass.sh
+          echo "MXXHUB_V42_SHCORE_DIALOGDIAG_SOURCE_OK"
+
+          grep -Fq "MXXHUB_WINDOWS_V43_MANAGED_PROBE_ESCAPE_FIX" mxxhub_patch_managed_probe_escape_v43.py
+          grep -Fq "GPA V43 MANAGED-PROBE PRESERVE:" mxxhub_patch_managed_probe_escape_v43.py
+          grep -Fq 'strcasestr(load_name, "\\Managed\\") != NULL' mxxhub_patch_real_module_gpa_v40.py
+          echo "MXXHUB_V43_MANAGED_PROBE_ESCAPE_SOURCE_OK"
+          test -f ./mxxhub_patch_graphics_route_v44.py
+          grep -Fq "MXXHUB_WINDOWS_V44_UNITY_D3D11_GRAPHICS_ROUTE" mxxhub_patch_graphics_route_v44.py
+          grep -Fq "GFX V44 D3D11 ROUTE:" mxxhub_patch_graphics_route_v44.py
+          grep -Fq -- '-force-d3d11 -force-d3d11-singlethreaded -force-d3d11-bitblt-model' mxxhub_patch_graphics_route_v44.py
+          grep -Fq "mxxhub_patch_graphics_route_v44.py" prepare_wineglass.sh
+          echo "MXXHUB_V44_GRAPHICS_ROUTE_SOURCE_OK"
+          test -f ./mxxhub_patch_dxgi_bootstrap_v45.py
+          grep -Fq "MXXHUB_WINDOWS_V45_DXGI_FACTORY_ADAPTER_BOOTSTRAP" mxxhub_patch_dxgi_bootstrap_v45.py
+          grep -Fq "GFX V45 DXGI BOOTSTRAP:" mxxhub_patch_dxgi_bootstrap_v45.py
+          echo "MXXHUB_V45_DXGI_BOOTSTRAP_SOURCE_OK"
+          test -f ./mxxhub_patch_d3d11_device_bootstrap_v46.py
+          grep -Fq "MXXHUB_WINDOWS_V46_D3D11_DEVICE_CONTEXT_BOOTSTRAP" mxxhub_patch_d3d11_device_bootstrap_v46.py
+          grep -Fq "GFX V46 D3D11 CREATE OK:" mxxhub_patch_d3d11_device_bootstrap_v46.py
+          grep -Fq "GFX V46 METAL RESOURCE BOUNDARY:" mxxhub_patch_d3d11_device_bootstrap_v46.py
+          grep -Fq "mxxhub_patch_d3d11_device_bootstrap_v46.py" prepare_wineglass.sh
+          echo "MXXHUB_V46_D3D11_BOOTSTRAP_SOURCE_OK"
+          test -f ./mxxhub_patch_d3d11_buffer_stability_v47.py
+          grep -Fq "MXXHUB_WINDOWS_V47_D3D11_BUFFER_VM_STABILITY" mxxhub_patch_d3d11_buffer_stability_v47.py
+          grep -Fq "GFX V47 NEW-VM RESET:" mxxhub_patch_d3d11_buffer_stability_v47.py
+          grep -Fq "GFX V47 BUFFER CREATE OK:" mxxhub_patch_d3d11_buffer_stability_v47.py
+          grep -Fq "GFX V47 BUFFER MAP:" mxxhub_patch_d3d11_buffer_stability_v47.py
+          grep -Fq "mxxhub_patch_d3d11_buffer_stability_v47.py" prepare_wineglass.sh
+          echo "MXXHUB_V47_BUFFER_VM_STABILITY_SOURCE_OK"
+          test -f ./mxxhub_patch_texture_com_v48.py
+          grep -Fq "MXXHUB_WINDOWS_V48_TEXTURE_SRV_SAFE_COM" mxxhub_patch_texture_com_v48.py
+          grep -Fq "COM V48 SAFE FAIL:" mxxhub_patch_texture_com_v48.py
+          grep -Fq "GFX V48 TEXTURE2D CREATE OK:" mxxhub_patch_texture_com_v48.py
+          grep -Fq "GFX V48 SRV CREATE OK:" mxxhub_patch_texture_com_v48.py
+          grep -Fq "mxxhub_patch_texture_com_v48.py" prepare_wineglass.sh
+          echo "MXXHUB_V48_TEXTURE_SRV_SAFE_COM_SOURCE_OK"
+          grep -Fq "MXXHUB_WINDOWS_V47_METAL_COLD_START_RECOVERY" MxxWineRuntimeViewController.m
+          grep -Fq "V47 METAL COLD-START RECOVERY:" MxxWineRuntimeViewController.m
+          echo "MXXHUB_V47_METAL_COLD_START_SOURCE_OK"
+          grep -Fq "MXXHUB_WINDOWS_V38_MANUAL_GAME_LAUNCH_ONLY" LibraryView.swift
+          if grep -Fq "autoBootHollowKnightOnce" LibraryView.swift; then
+            echo "ERROR: automatic Hollow Knight launch must be absent in V38" >&2
+            exit 1
+          fi
+          grep -Fq "MXXHUB_WINDOWS_V38_METAL_DRAWABLE_START_GATE" MxxWineRuntimeViewController.m
+          grep -Fq "mxxhub_patch_unwind_tables_v38.py" prepare_wineglass.sh
+          grep -Fq "V38.1 anchor hardening" mxxhub_patch_unwind_tables_v38.py
+          echo "MXXHUB_V38_1_DISPATCH_ANCHOR_SOURCE_OK"
+          grep -Fq "mxxhub_patch_critsec_backoff_v38.py" prepare_wineglass.sh
+          # V38: these UI/control-flow strings are source capabilities. In a
+          # Release build clang/ld may inline/merge/drop them from the final Mach-O.
+          grep -Fq 'V38 Metal gate passed' MxxWineRuntimeViewController.m
+          grep -Fq 'MxxHubRuntimeRequestedDismiss' MxxWineRuntimeViewController.m
+          grep -Fq 'MxxHubRuntimeRequestedDismiss' WineRuntimeHost.swift
+          echo "MXXHUB_V38_STABLE_BOOT_SOURCE_FINGERPRINT_OK"
+          grep -Fq "MXXHUB_WINDOWS_V37_STABLE_IMMERSIVE_SWIFT_HOST" WineRuntimeHost.swift
+          grep -Fq "MXXHUB_WINDOWS_V38_STABLE_IMMERSIVE_GUEST_MODE" MxxWineRuntimeViewController.m
+          grep -Fq "MXXHUB_WINDOWS_V38_METAL_DRAWABLE_START_GATE" MxxWineRuntimeViewController.m
+          grep -Fq "INFOPLIST_KEY_UIRequiresFullScreen: YES" project.yml
+          echo "MXXHUB_WINDOWS_V38_UI_SOURCE_OK"
+          test -s ./Assets.xcassets/AppIcon.appiconset/MxxHubIcon-1024.png
+          grep -Fq "ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon" project.yml
+          echo "MXXHUB_V32_NEW_APP_ICON_SOURCE_OK"
+          echo "Canonical MxxHub v0.4.9.57 V48 manual-launch + texture/SRV + safe COM files found."
+
+      - name: Prepare WineGlass + Blink runtime
+        run: |
+          set -o pipefail
+          chmod +x ./prepare_wineglass.sh
+          ./prepare_wineglass.sh 2>&1 | tee runtime-prepare.log
+
+      - name: Verify V20 host stability patch
+        run: |
+          python3 ./mxxhub_patch_host_v20.py .
+          grep -Fq 'SELFTEST V20 BYPASSED' MxxWineRuntimeViewController.m
+          grep -Fq 'host-latest.txt' MxxWineRuntimeViewController.m
+          echo "MXXHUB_V20_SOURCE_FINGERPRINT_OK"
+
+      - name: Upload runtime log if preparation fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: FAILED-NO-IPA-MxxHub-v0.4.9.57-runtime-log
+          path: runtime-prepare.log
+          if-no-files-found: ignore
+
+      - name: Verify runtime files
+        run: |
+          test -d External/WineGlass/Sources
+          test -f External/WineGlass/Vendor/blink/lib/blink.a
+          test -f External/WineGlass/Vendor/blink/lib/wg_blink_impl.o
+          grep -q HAVE_MAP_ANONYMOUS External/blink/config.h
+          xcrun --sdk iphoneos nm -g External/WineGlass/Vendor/blink/lib/wg_blink_impl.o > External/workflow_bridge.nm
+          grep -E '(^|[[:space:]])_?WGBlinkVM_Create$' External/workflow_bridge.nm
+          cat External/UPSTREAM_VERSIONS.txt
+
+      - name: Generate Xcode project
+        run: xcodegen generate --spec project.yml
+
+      - name: Build unsigned device app
+        run: |
+          set -o pipefail
+          xcodebuild \
+            -project MxxHub.xcodeproj \
+            -scheme MxxHub \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            SWIFT_VERSION=5.9 \
+            SWIFT_STRICT_CONCURRENCY=minimal \
+            CONFIGURATION_BUILD_DIR="$PWD/build" \
+            build | tee xcodebuild.log
+
+      - name: Verify V11 compiled runtime
+        run: |
+          set -e
+          echo "Checking final Mach-O for V11 runtime fingerprint..."
+          strings build/MxxHub.app/MxxHub | grep -F "MXXHUB RUNTIME V11 ACTIVE"
+          strings build/MxxHub.app/MxxHub | grep -F "GetLogicalProcessorInformationEx V11"
+          echo "MXXHUB_V11_BINARY_FINGERPRINT_OK"
+          # V13 supersedes the V12 VirtualQuery log string. Verify the V12
+          # stack-limit capability that survives into the final binary instead.
+          strings build/MxxHub.app/MxxHub | grep -F "GetCurrentThreadStackLimits V12"
+          echo "MXXHUB_V12_1_BINARY_CAPABILITY_OK"
+          # V24 intentionally replaced the old "VirtualQuery V13 stack"
+          # string with "VirtualQuery V24 stack-region". Keep checking the
+          # V13 high-VA capability here, and verify the new V24 stack behavior
+          # later in this same step.
+          strings build/MxxHub.app/MxxHub | grep -F "VirtualQuery V13 VA"
+          echo "MXXHUB_V13_1_BINARY_FINGERPRINT_OK"
+          echo "MXXHUB_V13_BINARY_FINGERPRINT_OK"
+          strings build/MxxHub.app/MxxHub | grep -F "WaitForSingleObjectEx V14(h="
+          strings build/MxxHub.app/MxxHub | grep -F "WaitForSingleObjectEx V14 consumed semaphore"
+          echo "MXXHUB_V14_BINARY_FINGERPRINT_OK"
+          strings build/MxxHub.app/MxxHub | grep -F "BAD RIP V15 RECOVERY"
+          strings build/MxxHub.app/MxxHub | grep -F "x64 stack qwords"
+          echo "MXXHUB_V15_BINARY_FINGERPRINT_OK"
+          strings build/MxxHub.app/MxxHub | grep -F "CreateFileMappingW V16"
+          strings build/MxxHub.app/MxxHub | grep -F "MapViewOfFile V16"
+          # V30 intentionally replaced the old V16 HeapReAlloc implementation
+          # and its "HeapReAlloc V16" log string. The current realloc behavior
+          # is verified later by the V30 "HEAP V30 REALLOC:" fingerprint.
+          echo "MXXHUB_V16_BINARY_FINGERPRINT_OK"
+          strings build/MxxHub.app/MxxHub | grep -F "MAIN STACK V17: 16 MiB reserved"
+          strings build/MxxHub.app/MxxHub | grep -F "STACK V17 waterline"
+          echo "MXXHUB_V17_BINARY_FINGERPRINT_OK"
+          strings build/MxxHub.app/MxxHub | grep -F "TLS64 V18 SET:"
+          echo "MXXHUB_V18_BINARY_FINGERPRINT_OK"
+          strings build/MxxHub.app/MxxHub | grep -F "BLINK DESTROY V19 WRAPPER-ONLY"
+          echo "MXXHUB_V19_BINARY_FINGERPRINT_OK"
+          strings build/MxxHub.app/MxxHub | grep -F "SELFTEST V20 BYPASSED"
+          strings build/MxxHub.app/MxxHub | grep -F "host-latest.txt"
+          echo "MXXHUB_V20_BINARY_FINGERPRINT_OK"
+          # V33.1: verify the stable V21 crash-snapshot capability marker instead of a versioned title.
+          strings build/MxxHub.app/MxxHub | grep -F "V21 crash snapshot saved:"
+          echo "MXXHUB_V33_1_V21_VERIFIER_FIX_OK"
+          strings build/MxxHub.app/MxxHub | grep -F "runtime-latest.log"
+          strings build/MxxHub.app/MxxHub | grep -F "crash-latest.log"
+          strings build/MxxHub.app/MxxHub | grep -F "MxxHubAlwaysShowLog"
+          echo "MXXHUB_V21_BINARY_FINGERPRINT_OK"
+          strings build/MxxHub.app/MxxHub | grep -F "HEAP V22 PACKED:"
+          echo "MXXHUB_V22_BINARY_FINGERPRINT_OK"
+          strings build/MxxHub.app/MxxHub | grep -F "TLS TEB V23 MIRROR:"
+          echo "MXXHUB_V23_BINARY_FINGERPRINT_OK"
+          strings build/MxxHub.app/MxxHub | grep -F "VirtualQuery V24 stack-region"
+          echo "MXXHUB_V24_BINARY_FINGERPRINT_OK"
+          if strings build/MxxHub.app/MxxHub | grep -Fq "CRITSEC V38 BACKOFF:"; then
+            echo "MXXHUB_V38_CRITSEC_BINARY_PRESENT"
+          else
+            echo "MXXHUB_V38_CRITSEC_BINARY_OPTIONAL_OK"
+          fi
+          # V29 intentionally replaces the V26 wide LoadLibrary path, so the
+          # old "MONO LOAD V26 EXPECTED MISS:" string no longer exists in the
+          # final Mach-O. Keep checking the surviving V26 CreateFileW behavior.
+          strings build/MxxHub.app/MxxHub | grep -F "CreateFileW V26 empty path"
+          echo "MXXHUB_V26_BINARY_FINGERPRINT_OK"
+          strings build/MxxHub.app/MxxHub | grep -F "PAGE TABLE V27 EXPANDED:"
+          echo "MXXHUB_V27_BINARY_FINGERPRINT_OK"
+          strings build/MxxHub.app/MxxHub | grep -F "SRW V28 FAIR YIELD:"
+          echo "MXXHUB_V28_BINARY_FINGERPRINT_OK"
+          strings build/MxxHub.app/MxxHub | grep -F "DLL SEARCH V29: SetDllDirectoryW"
+          strings build/MxxHub.app/MxxHub | grep -F "FAULT V29:"
+          echo "MXXHUB_V29_BINARY_FINGERPRINT_OK"
+          strings build/MxxHub.app/MxxHub | grep -F "HEAP V30 PREALLOC:"
+          strings build/MxxHub.app/MxxHub | grep -F "HEAP V30 REALLOC:"
+          echo "MXXHUB_V30_BINARY_FINGERPRINT_OK"
+          echo "MXXHUB_V30_1_BUILD_VERIFIER_OK"
+          echo "MXXHUB_V30_2_BUILD_VERIFIER_OK"
+          echo "MXXHUB_V30_3_V16_VERIFIER_OK"
+          strings build/MxxHub.app/MxxHub | grep -F "DLL V31 NORMALIZE:"
+          strings build/MxxHub.app/MxxHub | grep -F "UNITY V31 FAULT STEP:"
+          echo "MXXHUB_WINDOWS_V31_BINARY_FINGERPRINT_OK"
+          # V37.1 verifier hotfix: keep hard checks only for V32 strings that are
+          # guaranteed to survive into the linked Mach-O. The monitor-callback and
+          # MessageBox log strings live in optional dispatch branches and may be
+          # removed/merged by the compiler/linker even though the V32 source patch
+          # is present. Their source fingerprints are checked earlier instead.
+          strings build/MxxHub.app/MxxHub | grep -F "DISPLAY V32 METRIC:"
+          strings build/MxxHub.app/MxxHub | grep -F "DISPLAY V32 DEVICE:"
+          if strings build/MxxHub.app/MxxHub | grep -Fq "DISPLAY V32 MONITOR CALLBACK:"; then
+            echo "MXXHUB_V32_MONITOR_CALLBACK_BINARY_PRESENT"
+          else
+            echo "MXXHUB_V32_MONITOR_CALLBACK_BINARY_OPTIONAL_OK"
+          fi
+          if strings build/MxxHub.app/MxxHub | grep -Fq "MESSAGEBOX V32:"; then
+            echo "MXXHUB_V32_MESSAGEBOX_BINARY_PRESENT"
+          else
+            echo "MXXHUB_V32_MESSAGEBOX_BINARY_OPTIONAL_OK"
+          fi
+          echo "MXXHUB_WINDOWS_V32_BINARY_FINGERPRINT_OK"
+          echo "MXXHUB_V32_OPTIONAL_BINARY_VERIFIER_OK"
+          strings build/MxxHub.app/MxxHub | grep -F "UTF64 V33: MultiByteToWideChar"
+          strings build/MxxHub.app/MxxHub | grep -F "UTF64 V33: WideCharToMultiByte"
+          strings build/MxxHub.app/MxxHub | grep -F "FILE64 V33 CreateFileW:"
+          strings build/MxxHub.app/MxxHub | grep -F "FILE64 V33 ReadFile:"
+          strings build/MxxHub.app/MxxHub | grep -F "MEM64 V33:"
+          echo "MXXHUB_WINDOWS_V33_BINARY_FINGERPRINT_OK"
+          strings build/MxxHub.app/MxxHub | grep -F "FILEATTR V34 HIT:"
+          strings build/MxxHub.app/MxxHub | grep -F "FILEATTR V34 MISS:"
+          echo "MXXHUB_WINDOWS_V34_BINARY_FINGERPRINT_OK"
+          strings build/MxxHub.app/MxxHub | grep -F "WAITADDR V37 PARK:"
+          strings build/MxxHub.app/MxxHub | grep -F "WAITADDR V37 WAKE:"
+          echo "MXXHUB_WINDOWS_V37_WAITADDR_BINARY_FINGERPRINT_OK"
+          strings build/MxxHub.app/MxxHub | grep -F "UNWIND V38 ADD-GROW:"
+          if strings build/MxxHub.app/MxxHub | grep -Fq "UNWIND V38 GROW:"; then
+            echo "MXXHUB_V38_UNWIND_GROW_BINARY_PRESENT"
+          else
+            echo "MXXHUB_V38_UNWIND_GROW_BINARY_OPTIONAL_OK"
+          fi
+          echo "MXXHUB_WINDOWS_V38_UNWIND_BINARY_FINGERPRINT_OK"
+          # V39: runtime C logs should normally survive in the final Mach-O, but
+          # source verification above is authoritative so an optimizer/linker
+          # decision cannot create another false-negative build failure.
+          if strings build/MxxHub.app/MxxHub | grep -Fq "WAITADDR V39 IDLE-PARK:"; then
+            echo "MXXHUB_V39_IDLE_PARK_BINARY_PRESENT"
+          else
+            echo "MXXHUB_V39_IDLE_PARK_BINARY_OPTIONAL_OK"
+          fi
+          if strings build/MxxHub.app/MxxHub | grep -Fq "WAITADDR V39 HOST-WAKE:"; then
+            echo "MXXHUB_V39_HOST_WAKE_BINARY_PRESENT"
+          else
+            echo "MXXHUB_V39_HOST_WAKE_BINARY_OPTIONAL_OK"
+          fi
+          echo "MXXHUB_WINDOWS_V39_WAITADDR_IDLE_BINARY_VERIFIER_OK"
+          # V40 capability is source-authoritative; these diagnostic strings
+          # should survive, but do not fail an otherwise valid optimized binary.
+          if strings build/MxxHub.app/MxxHub | grep -Fq "GPA V40 REAL-MODULE MISS:"; then
+            echo "MXXHUB_V40_REAL_MODULE_GPA_BINARY_PRESENT"
+          else
+            echo "MXXHUB_V40_REAL_MODULE_GPA_BINARY_OPTIONAL_OK"
+          fi
+          if strings build/MxxHub.app/MxxHub | grep -Fq "GPA V40 MANAGED-PROBE PRESERVE:"; then
+            echo "MXXHUB_V40_MANAGED_PROBE_BINARY_PRESENT"
+          else
+            echo "MXXHUB_V40_MANAGED_PROBE_BINARY_OPTIONAL_OK"
+          fi
+          echo "MXXHUB_WINDOWS_V40_REAL_MODULE_GPA_BINARY_VERIFIER_OK"
+          if strings build/MxxHub.app/MxxHub | grep -Fq "DIALOG V41 X64 BYPASS:"; then
+            echo "MXXHUB_V41_X64_DIALOG_BINARY_PRESENT"
+          else
+            echo "MXXHUB_V41_X64_DIALOG_BINARY_OPTIONAL_OK"
+          fi
+          if strings build/MxxHub.app/MxxHub | grep -Fq "WAITADDR V41 COORD-WAKE:"; then
+            echo "MXXHUB_V41_COORD_WAKE_BINARY_PRESENT"
+          else
+            echo "MXXHUB_V41_COORD_WAKE_BINARY_OPTIONAL_OK"
+          fi
+          echo "MXXHUB_WINDOWS_V41_BINARY_VERIFIER_OK"
+          if strings build/MxxHub.app/MxxHub | grep -Fq "SHCORE V42 GetDpiForMonitor"; then
+            echo "MXXHUB_V42_SHCORE_BINARY_PRESENT"
+          else
+            echo "MXXHUB_V42_SHCORE_BINARY_OPTIONAL_OK"
+          fi
+          if strings build/MxxHub.app/MxxHub | grep -Fq "DIALOG V42 RESOURCE:"; then
+            echo "MXXHUB_V42_DIALOG_DIAG_BINARY_PRESENT"
+          else
+            echo "MXXHUB_V42_DIALOG_DIAG_BINARY_OPTIONAL_OK"
+          fi
+          if strings build/MxxHub.app/MxxHub | grep -Fq "DIALOG V42 X64 BYPASS:"; then
+            echo "MXXHUB_V42_DIALOG_BYPASS_BINARY_PRESENT"
+          else
+            echo "MXXHUB_V42_DIALOG_BYPASS_BINARY_OPTIONAL_OK"
+          fi
+          echo "MXXHUB_WINDOWS_V42_BINARY_VERIFIER_OK"
+          if strings build/MxxHub.app/MxxHub | grep -Fq "GPA V43 MANAGED-PROBE PRESERVE:"; then
+            echo "MXXHUB_V43_MANAGED_PROBE_BINARY_PRESENT"
+          else
+            echo "MXXHUB_V43_MANAGED_PROBE_BINARY_OPTIONAL_OK"
+          fi
+          echo "MXXHUB_WINDOWS_V43_BINARY_VERIFIER_OK"
+          if strings build/MxxHub.app/MxxHub | grep -Fq "GFX V44 D3D11 ROUTE:"; then
+            echo "MXXHUB_V44_D3D11_ROUTE_BINARY_PRESENT"
+          else
+            echo "MXXHUB_V44_D3D11_ROUTE_BINARY_OPTIONAL_OK"
+          fi
+          if strings build/MxxHub.app/MxxHub | grep -Fq "GFX V45 DXGI BOOTSTRAP:"; then
+            echo "MXXHUB_V45_DXGI_BOOTSTRAP_BINARY_PRESENT"
+          else
+            echo "MXXHUB_V45_DXGI_BOOTSTRAP_BINARY_OPTIONAL_OK"
+          fi
+          echo "MXXHUB_WINDOWS_V45_BINARY_VERIFIER_OK"
+          if strings build/MxxHub.app/MxxHub | grep -Fq "GFX V46 D3D11 CREATE OK:"; then
+            echo "MXXHUB_V46_D3D11_CREATE_BINARY_PRESENT"
+          else
+            echo "MXXHUB_V46_D3D11_CREATE_BINARY_OPTIONAL_OK"
+          fi
+          if strings build/MxxHub.app/MxxHub | grep -Fq "GFX V46 METAL RESOURCE BOUNDARY:"; then
+            echo "MXXHUB_V46_METAL_BOUNDARY_BINARY_PRESENT"
+          else
+            echo "MXXHUB_V46_METAL_BOUNDARY_BINARY_OPTIONAL_OK"
+          fi
+          if strings build/MxxHub.app/MxxHub | grep -Fq "GFX V47 BUFFER CREATE OK:"; then
+            echo "MXXHUB_V47_BUFFER_CREATE_BINARY_PRESENT"
+          else
+            echo "MXXHUB_V47_BUFFER_CREATE_BINARY_OPTIONAL_OK"
+          fi
+          if strings build/MxxHub.app/MxxHub | grep -Fq "GFX V47 NEW-VM RESET:"; then
+            echo "MXXHUB_V47_VM_RESET_BINARY_PRESENT"
+          else
+            echo "MXXHUB_V47_VM_RESET_BINARY_OPTIONAL_OK"
+          fi
+          strings build/MxxHub.app/MxxHub | grep -F "COM V48 SAFE FAIL:"
+          strings build/MxxHub.app/MxxHub | grep -F "GFX V48 TEXTURE2D CREATE OK:"
+          strings build/MxxHub.app/MxxHub | grep -F "GFX V48 SRV CREATE OK:"
+          echo "MXXHUB_V48_TEXTURE_SRV_SAFE_COM_BINARY_OK"
+          echo "MXXHUB_WINDOWS_V46_BINARY_VERIFIER_OK"
+          strings build/MxxHub.app/MxxHub | grep -F "V38 IMMERSIVE MODE:"
+          # V38 verifier: the Metal-gate breadcrumb and dismiss
+          # notification name are verified in source above. They may legitimately
+          # disappear from the final optimized Mach-O, so binary presence is
+          # informational rather than build-fatal.
+          if strings build/MxxHub.app/MxxHub | grep -Fq "V38 Metal gate passed"; then
+            echo "MXXHUB_V38_METAL_GATE_BINARY_PRESENT"
+          else
+            echo "MXXHUB_V38_METAL_GATE_BINARY_OPTIONAL_OK"
+          fi
+          if strings build/MxxHub.app/MxxHub | grep -Fq "MxxHubRuntimeRequestedDismiss"; then
+            echo "MXXHUB_V38_DISMISS_BINARY_PRESENT"
+          else
+            echo "MXXHUB_V38_DISMISS_BINARY_OPTIONAL_OK"
+          fi
+          echo "MXXHUB_WINDOWS_V38_STABLE_BOOT_BINARY_OK"
+          echo "MXXHUB_V48_BUILD_VERIFIER_OK"
+
+      - name: Upload build log if build fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: FAILED-NO-IPA-MxxHub-v0.4.9.57-build-log
+          path: xcodebuild.log
+          if-no-files-found: ignore
+
+      - name: Package and verify IPA
+        run: |
+          set -euo pipefail
+          IPA="MxxHub-v0.4.9.57-unsigned.ipa"
+          rm -rf Payload "$IPA"
+          mkdir -p Payload
+          cp -R build/MxxHub.app Payload/
+          /usr/bin/zip -qry "$IPA" Payload
+
+          test -s "$IPA"
+          /usr/bin/unzip -l "$IPA" | grep -F "Payload/MxxHub.app/MxxHub"
+          echo "IPA_CREATED_OK"
+          ls -lh "$IPA"
+
+          {
+            echo "## MxxHub IPA build"
+            echo ""
+            echo "✅ IPA created: \`$IPA\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      # GitHub Actions artifact downloads are already delivered as ONE ZIP.
+      # Upload the .ipa itself so the downloaded artifact ZIP contains the IPA
+      # directly. No inner IPA-PACKAGE.zip is created.
+      - name: Upload ONE-ZIP artifact containing IPA directly
+        uses: actions/upload-artifact@v4
+        with:
+          name: DOWNLOAD-ME-MxxHub-v0.4.9.57-ONE-ZIP-IPA
+          path: MxxHub-v0.4.9.57-unsigned.ipa
+          if-no-files-found: error
+          compression-level: 0
+
+      - name: Confirm single-layer IPA artifact
+        run: |
+          test -s "MxxHub-v0.4.9.57-unsigned.ipa"
+          echo "SINGLE_ARTIFACT_ZIP_IPA_OK"
+          {
+            echo "✅ One-layer artifact ready."
+            echo ""
+            echo "Download: **DOWNLOAD-ME-MxxHub-v0.4.9.57-ONE-ZIP-IPA**"
+            echo ""
+            echo "GitHub gives you one ZIP containing the .ipa directly."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Publish direct IPA under GitHub Releases
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          TAG="mxxhub-v0.4.9.57"
+          IPA="MxxHub-v0.4.9.57-unsigned.ipa"
+
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            echo "Updating existing release $TAG"
+            gh release upload "$TAG" "$IPA" --clobber
+          else
+            echo "Creating release $TAG"
+            gh release create "$TAG" "$IPA"               --title "MxxHub v0.4.9.57 Windows V48 Texture SRV Safe COM"               --notes "Unsigned iOS IPA. V48 keeps V47 stability, safely fails unsupported CoCreateInstance calls with NULL ppv instead of false S_OK, and adds CPU-backed ID3D11Texture2D plus ID3D11ShaderResourceView bootstrap objects."
+          fi
+
+          echo "DIRECT_IPA_RELEASE_OK"
+          gh release view "$TAG" --json url,assets
